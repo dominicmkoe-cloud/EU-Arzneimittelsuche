@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="EU Register">
+<title>EU Arzneimittelregister</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --surface2: #f1f0ec;
+    --border: #e2e0d8;
+    --border-strong: #c8c6bc;
+    --text: #1a1a18;
+    --text-muted: #6b6a65;
+    --text-light: #9b9a96;
+    --accent: #1A3A5C;
+    --accent-light: #e8eef4;
+    --accent-muted: #4a6d8c;
+    --green: #2d6a4f;
+    --green-bg: #e8f4ee;
+    --blue-badge: #1A3A5C;
+    --blue-badge-bg: #dce8f0;
+    --radius: 8px;
+    --radius-sm: 5px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+
+  header {
+    background: var(--accent);
+    color: white;
+    padding: 1rem 1.25rem 0.9rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+
+  header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    opacity: 0.97;
+  }
+
+  header p {
+    font-size: 11px;
+    opacity: 0.65;
+    margin-top: 2px;
+  }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 1rem 1rem 0;
+  }
+
+  /* Search bar */
+  .search-wrap {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .search-wrap input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    background: transparent;
+    color: var(--text);
+    min-width: 0;
+  }
+
+  .search-wrap input::placeholder { color: var(--text-light); }
+
+  .btn-search {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 7px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .btn-search:active { opacity: 0.85; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+
+  .tab {
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Filter buttons */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    line-height: 28px;
+  }
+
+  .btn-filter {
+    font-size: 12px;
+    padding: 4px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .btn-filter:active { background: var(--surface2); }
+
+  /* Country grid */
+  .country-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    gap: 6px;
+    margin-bottom: 1.25rem;
+  }
+
+  .country-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    cursor: pointer;
+    transition: border-color 0.1s;
+  }
+
+  .country-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .country-card label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    cursor: pointer;
+    flex: 1;
+    color: var(--text);
+  }
+
+  .country-card input[type=checkbox] {
+    accent-color: var(--accent);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+
+  .badge-direct { background: var(--green-bg); color: var(--green); }
+  .badge-manual { background: var(--surface2); color: var(--text-light); }
+  .badge-eu { background: var(--blue-badge-bg); color: var(--blue-badge); }
+
+  /* EU central register cards */
+  .eu-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .eu-card.primary { border-color: var(--accent-muted); }
+
+  .eu-card-info { flex: 1; min-width: 0; }
+
+  .eu-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+
+  .eu-card-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .btn-open {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .btn-open:active { opacity: 0.8; }
+
+  /* Results */
+  .results { margin-top: 1rem; }
+
+  .results-header {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .result-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .result-country {
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 130px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .result-domain {
+    font-size: 12px;
+    color: var(--text-light);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .btn-result {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 6px 11px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  .section-divider {
+    font-size: 11px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    margin: 14px 0 7px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .note {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  /* Mobile tweaks */
+  @media (max-width: 480px) {
+    header { padding: 0.85rem 1rem 0.75rem; }
+    .container { padding: 0.75rem 0.75rem 0; }
+    .country-grid { grid-template-columns: 1fr 1fr; gap: 5px; }
+    .result-domain { display: none; }
+    .result-country { min-width: 110px; }
+    .eu-card { flex-direction: column; align-items: flex-start; }
+    .btn-open { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔍 EU Arzneimittelregister</h1>
+  <p>Alle 27 EU/EEA Länder + EMA Zentralregister</p>
+</header>
+
+<div class="container">
+
+  <div class="search-wrap" style="margin-top: 1rem;">
+    <input type="text" id="medName" placeholder="Medikamentenname eingeben, z. B. Pavblu, Rifinah..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    <button class="btn-search" onclick="runSearch()">Suchen</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('national', this)">🏳️ Nationale Register</button>
+    <button class="tab" onclick="switchTab('eu', this)">🇪🇺 EU-Zentralregister</button>
+  </div>
+
+  <!-- NATIONAL TAB -->
+  <div id="panel-national" class="tab-panel active">
+    <div class="filter-row">
+      <span class="filter-label">Auswahl:</span>
+      <button class="btn-filter" onclick="selectAll(true)">Alle</button>
+      <button class="btn-filter" onclick="selectAll(false)">Keine</button>
+      <button class="btn-filter" onclick="selectGroup('major')">Große Märkte</button>
+      <button class="btn-filter" onclick="selectGroup('pi')">Parallelimport</button>
+    </div>
+    <div class="country-grid" id="countryGrid"></div>
+    <div id="resultsArea" style="display:none;" class="results">
+      <div class="results-header" id="resultsHeader"></div>
+      <div id="resultsList"></div>
+      <div class="note">
+        <strong>Direkt:</strong> Register öffnet mit vorausgefüllter Suche. &nbsp;|&nbsp; <strong>Manuell:</strong> Register öffnet, Suchbegriff dort eingeben.
+      </div>
+    </div>
+  </div>
+
+  <!-- EU CENTRAL TAB -->
+  <div id="panel-eu" class="tab-panel">
+    <div id="euCards"></div>
+    <div class="note" style="margin-top: 0.5rem;">
+      Suche zuerst einen Medikamentennamen ein und klicke „Suchen" – die Links werden dann mit deinem Begriff vorausgefüllt.
+    </div>
+  </div>
+
+</div>
+
+<script>
+const registers = [
+  { code:"AT", name:"Österreich",    url:"http://aspregister.basg.gv.at/aspregister/faces/aspregister.jspx", searchTpl:null, major:false, pi:false },
+  { code:"BE", name:"Belgien",       url:"http://banquededonneesmedicaments.fagg-afmps.be/", searchTpl:null, major:false, pi:false },
+  { code:"BG", name:"Bulgarien",     url:"http://www.bda.bg/images/stories/documents/bdias/drugs2_list2_1.htm", searchTpl:null, major:false, pi:false },
+  { code:"HR", name:"Kroatien",      url:"http://www.halmed.hr/Lijekovi/Baza-lijekova/", searchTpl:null, major:false, pi:false },
+  { code:"CY", name:"Zypern",        url:"https://www.phs.moh.gov.cy/index_en.html", searchTpl:null, major:false, pi:false },
+  { code:"CZ", name:"Tschechien",    url:"https://prehledy.sukl.cz/prehled_leciv.html#/", searchTpl:"https://prehledy.sukl.cz/prehled_leciv.html#/?q={q}", major:false, pi:false },
+  { code:"DK", name:"Dänemark",      url:"https://laegemiddelstyrelsen.dk/en/licensing/licensing-of-medicines/lists-of-authorised-and-deregistered-medicines/", searchTpl:null, major:false, pi:true },
+  { code:"EE", name:"Estland",       url:"http://ravimiregister.ravimiamet.ee/?pv=HumRavimid.Otsing", searchTpl:null, major:false, pi:true },
+  { code:"FI", name:"Finnland",      url:"http://www.fimea.fi/laakehaut_ja_luettelot/laakehaku", searchTpl:null, major:false, pi:false },
+  { code:"FR", name:"Frankreich",    url:"http://agence-prd.ansm.sante.fr/php/ecodex/index.php", searchTpl:"http://agence-prd.ansm.sante.fr/php/ecodex/redir.php?specialite={q}", major:true, pi:true },
+  { code:"DE", name:"Deutschland",   url:"https://www.pharmnet-bund.de/PharmNet/DE/Oeffentlichkeit/Arzneimittel-Informationssystem/_node.html", searchTpl:null, major:true, pi:true },
+  { code:"GR", name:"Griechenland",  url:"https://services.eof.gr/human-search/home.xhtml", searchTpl:null, major:false, pi:true },
+  { code:"HU", name:"Ungarn",        url:"https://ogyei.gov.hu/gyogyszeradatbazis/", searchTpl:null, major:false, pi:true },
+  { code:"IE", name:"Irland",        url:"http://www.hpra.ie/homepage/medicines/medicines-information/find-a-medicine", searchTpl:null, major:false, pi:false },
+  { code:"IT", name:"Italien",       url:"https://medicinali.aifa.gov.it/", searchTpl:"https://medicinali.aifa.gov.it/search?q={q}", major:true, pi:true },
+  { code:"LV", name:"Lettland",      url:"https://dati.zva.gov.lv/zalu-registrs/en", searchTpl:"https://dati.zva.gov.lv/zalu-registrs/en?q={q}", major:false, pi:true },
+  { code:"LT", name:"Litauen",       url:"http://vapris.vvkt.lt/vvkt-web/public/medications", searchTpl:null, major:false, pi:true },
+  { code:"LU", name:"Luxemburg",     url:"https://sante.public.lu/fr/espace-professionnel/domaines/pharmacies-et-medicaments/medicaments-humains.html", searchTpl:null, major:false, pi:false },
+  { code:"MT", name:"Malta",         url:"http://www.medicinesauthority.gov.mt/advanced-search", searchTpl:null, major:false, pi:false },
+  { code:"NL", name:"Niederlande",   url:"https://www.geneesmiddeleninformatiebank.nl", searchTpl:"https://www.geneesmiddeleninformatiebank.nl/nl/geneesmiddelen?q={q}", major:true, pi:true },
+  { code:"PL", name:"Polen",         url:"https://rejestrymedyczne.ezdrowie.gov.pl/rpl/search/public", searchTpl:"https://rejestrymedyczne.ezdrowie.gov.pl/rpl/search/public?activeIngredient=&name={q}", major:false, pi:true },
+  { code:"PT", name:"Portugal",      url:"https://extranet.infarmed.pt/INFOMED-fo/index.xhtml", searchTpl:null, major:false, pi:false },
+  { code:"RO", name:"Rumänien",      url:"http://www.anm.ro/nomenclator/medicamente", searchTpl:null, major:false, pi:false },
+  { code:"SK", name:"Slowakei",      url:"http://www.sukl.sk/hlavna-stranka/slovenska-verzia/databazy-a-servis/vyhladavanie-liekov-zdravotnickych-pomocok-a-zmien-v-liekovej-databaze/vyhladavanie-v-databaze-registrovanych-liekov", searchTpl:null, major:false, pi:false },
+  { code:"SI", name:"Slowenien",     url:"http://www.cbz.si/cbz/bazazdr2.nsf/Search/%24searchForm?SearchView", searchTpl:null, major:false, pi:false },
+  { code:"ES", name:"Spanien",       url:"http://cima.aemps.es/cima/publico/home.html", searchTpl:"https://cima.aemps.es/cima/publico/lista.html#indicacion=&nombre={q}&labTitular=&pracAct=&estado=A", major:true, pi:true },
+  { code:"SE", name:"Schweden",      url:"https://www.lakemedelsverket.se/sv/sok-lakemedelsfakta?activeTab=1", searchTpl:null, major:false, pi:true },
+  { code:"IS", name:"Island (EEA)",  url:"https://www.ima.is/published_material/lists/#q=human%20medicinal%20products%20with%20ma", searchTpl:null, major:false, pi:false },
+  { code:"NO", name:"Norwegen (EEA)",url:"http://www.legemiddelsok.no/", searchTpl:"https://www.legemiddelsok.no/sider/default.aspx?searchquery={q}", major:false, pi:false },
+];
+
+const euCentral = [
+  { id:"ema",   name:"EMA – EPAR Datenbank", badge:"Zentral", desc:"Alle zentral zugelassenen Humanarzneimittel mit EU/1/-Nummern. Vollständig durchsuchbar nach Name, Wirkstoff, Inhaber.", baseUrl:"https://www.ema.europa.eu/en/medicines/medicines-list", searchTpl:"https://www.ema.europa.eu/en/medicines/medicines-list?search_api_views_fulltext={q}", primary:true },
+  { id:"union", name:"Union Register (EU-Kommission)", badge:"Zentral", desc:"Offizielles Register aller zentral zugelassenen Arzneimittel inkl. Zulassungsstatus, Inhaber und Historie.", baseUrl:"https://ec.europa.eu/health/documents/community-register/html/index_en.htm", searchTpl:"https://ec.europa.eu/health/documents/community-register/html/alfmedlisting.htm#q={q}", primary:true },
+  { id:"eudra", name:"EudraPharm", badge:"SmPC/PIL", desc:"SmPCs und Packungsbeilagen aller EMA-zugelassenen Produkte.", baseUrl:"https://www.eudrapharm.eu/eudrapharm/welcome.do", searchTpl:null, primary:false },
+  { id:"mri",   name:"MRI Product Index (HMA)", badge:"Dezentral", desc:"Register der im MRP/DCP-Verfahren national/dezentral zugelassenen Humanarzneimittel.", baseUrl:"https://mri.nic.eu/human/index.html", searchTpl:"https://mri.nic.eu/human/index.html?name={q}", primary:false },
+];
+
+function renderGrid() {
+  document.getElementById('countryGrid').innerHTML = registers.map(r => `
+    <div class="country-card${r.major ? ' selected' : ''}" id="card-${r.code}" onclick="toggleCard('${r.code}')">
+      <label onclick="event.stopPropagation()">
+        <input type="checkbox" id="chk-${r.code}" ${r.major ? 'checked' : ''} onchange="updateCard('${r.code}')">
+        ${r.name}
+      </label>
+      <span class="badge ${r.searchTpl ? 'badge-direct' : 'badge-manual'}">${r.searchTpl ? 'Direkt' : 'Manuell'}</span>
+    </div>`).join('');
+}
+
+function renderEuCards() {
+  document.getElementById('euCards').innerHTML = euCentral.map(e => `
+    <div class="eu-card${e.primary ? ' primary' : ''}">
+      <div class="eu-card-info">
+        <div class="eu-card-name">
+          <span class="badge badge-eu">${e.badge}</span>
+          ${e.name}
+        </div>
+        <div class="eu-card-desc">${e.desc}</div>
+      </div>
+      <a id="eulink-${e.id}" class="btn-open" href="${e.baseUrl}" target="_blank">Öffnen ↗</a>
+    </div>`).join('');
+}
+
+function toggleCard(code) {
+  const chk = document.getElementById('chk-' + code);
+  chk.checked = !chk.checked;
+  updateCard(code);
+}
+
+function updateCard(code) {
+  const chk = document.getElementById('chk-' + code);
+  document.getElementById('card-' + code).classList.toggle('selected', chk.checked);
+}
+
+function selectAll(val) {
+  registers.forEach(r => { document.getElementById('chk-' + r.code).checked = val; updateCard(r.code); });
+}
+
+function selectGroup(g) {
+  registers.forEach(r => { const v = g === 'major' ? r.major : r.pi; document.getElementById('chk-' + r.code).checked = v; updateCard(r.code); });
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+function updateEuLinks(q) {
+  euCentral.forEach(e => {
+    const el = document.getElementById('eulink-' + e.id);
+    if (el) el.href = e.searchTpl ? e.searchTpl.replace('{q}', encodeURIComponent(q)) : e.baseUrl;
+  });
+  const note = document.querySelector('#panel-eu .note');
+  if (note && q) note.textContent = `Such-Links für „${q}" wurden vorausgefüllt. Klicke „Öffnen" um das Register zu starten.`;
+}
+
+function runSearch() {
+  const q = document.getElementById('medName').value.trim();
+  if (!q) { document.getElementById('medName').focus(); return; }
+  updateEuLinks(q);
+
+  const selected = registers.filter(r => document.getElementById('chk-' + r.code).checked);
+  if (!selected.length) { document.getElementById('resultsArea').style.display = 'none'; return; }
+
+  const direct = selected.filter(r => r.searchTpl);
+  const manual = selected.filter(r => !r.searchTpl);
+  let html = '';
+
+  if (direct.length) {
+    html += `<div class="section-divider">Direkt (${direct.length})</div>`;
+    direct.forEach(r => {
+      const link = r.searchTpl.replace('{q}', encodeURIComponent(q));
+      html += `<div class="result-row">
+        <span class="result-country">${r.name}</span>
+        <span class="result-domain">${r.url.replace(/https?:\/\//, '').split('/')[0]}</span>
+        <a class="btn-result" href="${link}" target="_blank">Öffnen ↗</a>
+      </div>`;
+    });
+  }
+
+  if (manual.length) {
+    html += `<div class="section-divider">Manuell (${manual.length})</div>`;
+    manual.forEach(r => {
+      html += `<div class="result-row">
+        <span class="result-country">${r.name}</span>
+        <span class="result-domain">${r.url.replace(/https?:\/\//, '').split('/')[0]}</span>
+        <a class="btn-result" href="${r.url}" target="_blank">Öffnen ↗</a>
+      </div>`;
+    });
+  }
+
+  document.getElementById('resultsList').innerHTML = html;
+  document.getElementById('resultsHeader').textContent = `Ergebnisse für „${q}" – ${selected.length} Register ausgewählt`;
+  document.getElementById('resultsArea').style.display = 'block';
+  document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.getElementById('medName').addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+
+renderGrid();
+renderEuCards();
+</script>
+</body>
+</html>
